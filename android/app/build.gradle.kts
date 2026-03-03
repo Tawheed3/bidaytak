@@ -18,7 +18,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        // ✅ 1. تفعيل desugaring (كان مفقوداً)
+        // ✅ تفعيل desugaring
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -28,18 +28,36 @@ android {
 
     defaultConfig {
         applicationId = "com.bidayatik.app"
-        // ✅ 2. يجب أن يكون minSdk = 21 وليس flutter.minSdkVersion
+        // ✅ minSdk
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        // ✅ 3. تفعيل MultiDex (كان مفقوداً)
+        // ✅ تفعيل MultiDex
         multiDexEnabled = true
+    }
+
+    // ✅ إضافة تقسيم APKs حسب المعالج (يقلل الحجم جداً)
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = false
+        }
     }
 
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
+
+            // ✅ تفعيل تقليل الحجم (الأهم)
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
@@ -48,7 +66,7 @@ flutter {
     source = "../.."
 }
 
-// ✅ 4. إضافة مكتبة desugaring (كانت مفقودة)
+// ✅ إضافة مكتبة desugaring
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
