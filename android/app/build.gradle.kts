@@ -1,12 +1,7 @@
-// android/app/build.gradle.kts
-
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
     id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -18,7 +13,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        // ✅ تفعيل desugaring
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -28,30 +22,26 @@ android {
 
     defaultConfig {
         applicationId = "com.bidayatik.app"
-        // ✅ minSdk
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        // ✅ تفعيل MultiDex
         multiDexEnabled = true
     }
 
-    // ✅ إضافة تقسيم APKs حسب المعالج (يقلل الحجم جداً)
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86_64")
-            isUniversalApk = false
-        }
-    }
+    // ✅ تقسيم APKs (هنا بس، ومتضيفش أي حاجة تانية للـ ABIs)
+    // splits {
+    //   abi {
+    //       isEnable = true
+    //       reset()
+    //         include("armeabi-v7a", "arm64-v8a", "x86_64")
+    //         isUniversalApk = false
+    //      }
+    //   }
 
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
-
-            // ✅ تفعيل تقليل الحجم (الأهم)
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -66,7 +56,6 @@ flutter {
     source = "../.."
 }
 
-// ✅ إضافة مكتبة desugaring
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
