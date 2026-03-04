@@ -244,63 +244,9 @@ class RecordDetailScreen extends StatelessWidget {
     );
   }
 
-  // ✅ show share options
-  void _showShareOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'مشاركة النتيجة',
-              style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            // ✅ PDF option
-            _buildShareOption(
-              ctx,
-              Icons.picture_as_pdf,
-              'PDF',
-                  () => _shareAsPDF(context),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShareOption(BuildContext ctx, IconData icon, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pop(ctx);
-        onTap();
-      },
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.teal.shade50,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.teal, size: 24),
-          ),
-          const SizedBox(height: 4),
-          Text(label, style: GoogleFonts.cairo(fontSize: 12)),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return
-      SafeArea(child:  Scaffold(
+    return Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
           backgroundColor: Colors.teal,
@@ -318,10 +264,10 @@ class RecordDetailScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
-            // ✅ PDF share button
+            // ✅ PDF مباشر - بدون BottomSheet
             IconButton(
               icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-              onPressed: () => _showShareOptions(context),
+              onPressed: () => _shareAsPDF(context),  // ✅ استدعاء مباشر
               tooltip: 'مشاركة كـ PDF',
             ),
             IconButton(
@@ -346,7 +292,6 @@ class RecordDetailScreen extends StatelessWidget {
                               listen: false);
                           await provider.deleteRecord(record.id!);
                           Navigator.pop(ctx); // close dialog
-                          // ✅ return true to previous screen to indicate deletion
                           Navigator.pop(context, true);
                         },
                         child: Text(
@@ -365,7 +310,7 @@ class RecordDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // ✅ personal data card
+              // personal data card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -404,7 +349,7 @@ class RecordDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ✅ result card
+              // result card
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -446,7 +391,7 @@ class RecordDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ✅ category details
+              // category details
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -510,7 +455,7 @@ class RecordDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ✅ top 4 strengths
+              // top 4 strengths
               if (record.strengths.isNotEmpty) ...[
                 Container(
                   width: double.infinity,
@@ -602,7 +547,7 @@ class RecordDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ✅ top 12 weaknesses
+              // top 12 weaknesses
               if (record.weaknesses.isNotEmpty) ...[
                 Container(
                   width: double.infinity,
@@ -694,7 +639,7 @@ class RecordDetailScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ✅ general advice
+              // general advice
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -729,8 +674,8 @@ class RecordDetailScreen extends StatelessWidget {
             ],
           ),
         ),
-      )
-      );
+
+    );
   }
 
   Widget _buildInfoRow(String label, String value) {
