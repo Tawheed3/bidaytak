@@ -278,6 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildStudentCard('وتين الصائغ'),
                     _buildStudentCard('حلا ثروة '),
                     _buildStudentCard('ليان ضمرة '),
+                    _buildStudentCard(' سجى القرني'),
                   ],
                   const SizedBox(height: 12),
 
@@ -357,28 +358,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _buildContactTile(
-                    icon: Icons.email,
-                    iconColor: Colors.red,
-                    title: 'Gmail',
-                    subtitle: 'malakkamaal1661@gmail.com',
-                    onTap: () => _launchEmail('malakkamaal1661@gmail.com'),
-                  ),
+
                   const Divider(height: 1),
                   _buildContactTile(
                     icon: Icons.phone,
                     iconColor: Colors.green,
                     title: 'Phone',
-                    subtitle: '+966 541570716',
-                    onTap: () => _launchPhone('+966541570716'),
+                    subtitle: '+966 53 800 0413',
+                    onTap: () => _launchPhone('+966 53 800 0413'),
                   ),
                   const Divider(height: 1),
                   _buildContactTile(
                     icon: Icons.message,
                     iconColor: Colors.teal,
                     title: 'WhatsApp',
-                    subtitle: '+966 541570716',
-                    onTap: () => _launchWhatsApp('966541570716'),
+                    subtitle: '+966 53 800 0413',
+                    onTap: () => _launchWhatsApp('966538000413'),
                   ),
                 ],
               ),
@@ -418,28 +413,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ==================== footer ====================
-  Widget _buildFooter() {
-    return Column(
-      children: [
-        Text(
-          'الإصدار 1.0.0',
-          style: GoogleFonts.cairo(
-            fontSize: 12,
-            color: Colors.grey[500],
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'جميع الحقوق محفوظة © 2025',
-          style: GoogleFonts.cairo(
-            fontSize: 12,
-            color: Colors.grey[400],
-          ),
-        ),
-      ],
-    );
-  }
+
 
   // ==================== helper functions ====================
 
@@ -598,11 +572,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ✅ url launcher functions
   Future<void> _launchWhatsApp(String phone) async {
     final Uri uri = Uri.parse('https://wa.me/$phone');
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  Future<void> _launchEmail(String email) async {
-    final Uri uri = Uri.parse('mailto:$email?subject=Inquiry&body=Hello');
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
