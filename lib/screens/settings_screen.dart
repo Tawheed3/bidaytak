@@ -53,14 +53,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildAboutSection(),
               const SizedBox(height: 8),
 
-              // ✅ contact us section
+              // ✅ contact us section (Email only)
               _buildContactSection(),
               const SizedBox(height: 20),
 
               // ✅ logout button
               _buildLogoutButton(authProvider),
               const SizedBox(height: 20),
-
             ],
           ),
         ),
@@ -163,6 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+
   // ==================== about section ====================
   Widget _buildAboutSection() {
     return Column(
@@ -311,10 +311,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'This app helps you assess your readiness for marriage through a comprehensive test covering five main areas: emotional maturity, responsibility, conflict management, financial independence, and communication skills. The app provides you with a detailed analysis of your answers with personalized advice and a development plan to help you improve your weaknesses and enhance your strengths.',style: GoogleFonts.cairo(
-                          fontSize: 14,
-                          height: 1.5,
-                        ),
+                          'This app helps you assess your readiness for marriage through a comprehensive test covering five main areas: emotional maturity, responsibility, conflict management, financial independence, and communication skills. The app provides you with a detailed analysis of your answers with personalized advice and a development plan to help you improve your weaknesses and enhance your strengths.',
+                          style: GoogleFonts.cairo(
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
                           textAlign: TextAlign.justify,
                         ),
                       ],
@@ -329,7 +330,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ==================== contact us section ====================
+  // ==================== contact us section (Email only) ====================
   Widget _buildContactSection() {
     return Column(
       children: [
@@ -358,22 +359,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-
-                  const Divider(height: 1),
+                  // ✅ Email only - removed phone and whatsapp
                   _buildContactTile(
-                    icon: Icons.phone,
-                    iconColor: Colors.green,
-                    title: 'Phone',
-                    subtitle: '+966 53 800 0413',
-                    onTap: () => _launchPhone('+966 53 800 0413'),
-                  ),
-                  const Divider(height: 1),
-                  _buildContactTile(
-                    icon: Icons.message,
-                    iconColor: Colors.teal,
-                    title: 'WhatsApp',
-                    subtitle: '+966 53 800 0413',
-                    onTap: () => _launchWhatsApp('966538000413'),
+                    icon: Icons.email,
+                    iconColor: Colors.red,
+                    title: 'Email',
+                    subtitle: 'ghayda650@gmail.com', // ضع الإيميل المطلوب هنا
+                    onTap: () => _launchEmail('ghayda650@gmail.com'), // ضع الإيميل المطلوب هنا
                   ),
                 ],
               ),
@@ -412,8 +404,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-
-
 
   // ==================== helper functions ====================
 
@@ -569,14 +559,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ✅ url launcher functions
-  Future<void> _launchWhatsApp(String phone) async {
-    final Uri uri = Uri.parse('https://wa.me/$phone');
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  Future<void> _launchPhone(String phone) async {
-    final Uri uri = Uri.parse('tel:$phone');
+  // ✅ email launcher function
+  Future<void> _launchEmail(String email) async {
+    final Uri uri = Uri.parse('mailto:$email?subject=استفسار&body=مرحباً');
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 }
