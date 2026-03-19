@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // ✅ أضف هذا الاستيراد
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:screenshot/screenshot.dart';
@@ -12,7 +12,7 @@ import '../core/models/result_model.dart';
 import '../providers/test_provider.dart';
 import 'home_screen.dart';
 
-class ResultScreen extends StatefulWidget {  // ✅ حولناها لـ StatefulWidget
+class ResultScreen extends StatefulWidget {
   final ResultModel result;
   final ScreenshotController screenshotController = ScreenshotController();
 
@@ -26,13 +26,13 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    // ✅ إخفاء الأزرار السفلية عند فتح الشاشة
+    // إخفاء الأزرار السفلية عند فتح الشاشة
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
   @override
   void dispose() {
-    // ✅ إعادة إظهار الأزرار السفلية عند الخروج من الشاشة
+    // إعادة إظهار الأزرار السفلية عند الخروج من الشاشة
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
@@ -63,7 +63,7 @@ class _ResultScreenState extends State<ResultScreen> {
     return sorted.take(12).toList();
   }
 
-  // ✅ share as PDF directly
+  // مشاركة كـ PDF
   Future<void> _shareAsPDF(BuildContext context) async {
     final topStrengths = _getTopStrengths();
     final topWeaknesses = _getTopWeaknesses();
@@ -71,7 +71,7 @@ class _ResultScreenState extends State<ResultScreen> {
     try {
       _showLoadingDialog(context);
 
-      // ✅ use Arabic fonts from assets
+      // استخدام الخطوط العربية
       final fontData = await rootBundle.load('assets/fonts/Amiri-Regular.ttf');
       final fontBoldData = await rootBundle.load('assets/fonts/Amiri-Bold.ttf');
 
@@ -97,7 +97,7 @@ class _ResultScreenState extends State<ResultScreen> {
           },
           build: (pw.Context context) {
             return [
-              // main result
+              // النتيجة الرئيسية
               pw.Center(
                 child: pw.Text(
                   '${widget.result.overallScore.toStringAsFixed(1)}% - ${widget.result.status}',
@@ -107,7 +107,7 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
               pw.SizedBox(height: 20),
 
-              // category results
+              // نتائج المجالات
               pw.Text(
                 'نتائج المجالات:',
                 style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, font: ttfBold),
@@ -123,7 +123,7 @@ class _ResultScreenState extends State<ResultScreen> {
               }).toList(),
               pw.SizedBox(height: 20),
 
-              // strengths
+              // نقاط القوة
               if (topStrengths.isNotEmpty) ...[
                 pw.Text(
                   'نقاط القوة:',
@@ -152,7 +152,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 pw.SizedBox(height: 20),
               ],
 
-              // weaknesses
+              // نقاط الضعف
               if (topWeaknesses.isNotEmpty) ...[
                 pw.Text(
                   'نقاط تحتاج تحسين:',
@@ -181,7 +181,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 pw.SizedBox(height: 20),
               ],
 
-              // development plan
+              // خطة التطوير
               if (widget.result.developmentPlan != null && widget.result.developmentPlan!.isNotEmpty) ...[
                 pw.Text(
                   'خطة التطوير:',
@@ -199,7 +199,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 pw.SizedBox(height: 20),
               ],
 
-              // summary
+              // الملخص
               pw.Text(
                 'الملخص:',
                 style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, font: ttfBold),
@@ -227,7 +227,7 @@ class _ResultScreenState extends State<ResultScreen> {
         ),
       );
 
-      // save PDF
+      // حفظ PDF
       final directory = await getTemporaryDirectory();
       final pdfPath = '${directory.path}/result_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final pdfFile = File(pdfPath);
@@ -248,7 +248,7 @@ class _ResultScreenState extends State<ResultScreen> {
     } catch (e) {
       print('❌ خطأ في إنشاء PDF: $e');
       if (context.mounted) {
-        Navigator.pop(context); // close loading dialog
+        Navigator.pop(context); // إغلاق dialog التحميل
         _showError(context, 'خطأ في إنشاء PDF: $e');
       }
     }
@@ -313,16 +313,16 @@ class _ResultScreenState extends State<ResultScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
           onPressed: () {
-            provider.reset();
+            provider.reset(); // تنظيف البيانات
+            // الرجوع للـ HomeScreen مباشرة وحذف كل الشاشات السابقة
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const HomeScreen()),
-                  (route) => false,
+                  (route) => false, // يحذف كل الشاشات السابقة
             );
           },
         ),
         actions: [
-          // ✅ PDF مباشر - بدون BottomSheet
           IconButton(
             icon: const Icon(Icons.picture_as_pdf, color: Colors.white, size: 20),
             onPressed: () => _shareAsPDF(context),
@@ -336,7 +336,7 @@ class _ResultScreenState extends State<ResultScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // main result card
+              // بطاقة النتيجة الرئيسية
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -382,7 +382,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
               const SizedBox(height: 20),
 
-              // category details
+              // تفاصيل المجالات
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -443,7 +443,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
               const SizedBox(height: 20),
 
-              // strengths
+              // نقاط القوة
               if (topStrengths.isNotEmpty) ...[
                 Container(
                   width: double.infinity,
@@ -537,7 +537,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 const SizedBox(height: 20),
               ],
 
-              // weaknesses
+              // نقاط الضعف
               if (topWeaknesses.isNotEmpty) ...[
                 Container(
                   width: double.infinity,
@@ -631,7 +631,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 const SizedBox(height: 20),
               ],
 
-              // development plan
+              // خطة التطوير
               if (widget.result.developmentPlan != null && widget.result.developmentPlan!.isNotEmpty) ...[
                 Container(
                   width: double.infinity,
@@ -699,7 +699,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 const SizedBox(height: 20),
               ],
 
-              // assessment summary
+              // ملخص التقييم
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -734,7 +734,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
               const SizedBox(height: 20),
 
-              // ✅ single button - new test only
+              // زر اختبار جديد
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

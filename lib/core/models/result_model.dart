@@ -1,3 +1,5 @@
+// lib/core/models/result_model.dart
+
 import 'question_model.dart';
 import 'package:flutter/material.dart';
 
@@ -5,14 +7,12 @@ class ResultModel {
   final double overallScore;
   final String status;
   final Map<String, double> categoryScores;
-  final List<String> strengths; // for compatibility with old code
-  final List<String> weaknesses; // for compatibility with old code
+  final List<String> strengths;
+  final List<String> weaknesses;
   final String advice;
   final DateTime testDate;
   final Map<String, dynamic> rawAnswers;
   final List<Question> questions;
-
-  // ✅ new additions from AI
   final List<Map<String, dynamic>>? detailedStrengths;
   final List<Map<String, dynamic>>? detailedWeaknesses;
   final List<String>? developmentPlan;
@@ -74,29 +74,25 @@ class ResultModel {
     };
   }
 
-  // ✅ from AI analysis
   factory ResultModel.fromAIAnalysis({
     required Map<String, dynamic> analysis,
     required Map<String, int> rawAnswers,
     required List<Question> questions,
+    String? gender,
   }) {
-    // extract values from analysis
     double overallScore = analysis['overallScore']?.toDouble() ?? 0;
     String status = analysis['status'] ?? 'غير محدد';
     Map<String, double> categoryScores = Map<String, double>.from(analysis['categoryScores'] ?? {});
 
-    // simplified strengths and weaknesses (for compatibility with old code)
     List<String> strengths = [];
     List<String> weaknesses = [];
 
-    // extract detailed points
     List<Map<String, dynamic>>? detailedStrengths;
     List<Map<String, dynamic>>? detailedWeaknesses;
     List<String>? developmentPlan;
 
     if (analysis['detailedStrengths'] != null) {
       detailedStrengths = List<Map<String, dynamic>>.from(analysis['detailedStrengths']);
-      // add simplified points
       strengths = detailedStrengths.map((s) => s['question']?.toString() ?? '').toList();
     }
 
@@ -127,21 +123,18 @@ class ResultModel {
     );
   }
 
-  // ✅ status color
   Color getStatusColor() {
     if (status.contains('مؤهل للزواج')) return Colors.green;
     if (status.contains('مؤهل جزئياً')) return Colors.orange;
     return Colors.red;
   }
 
-  // ✅ status icon
   IconData getStatusIcon() {
     if (status.contains('مؤهل للزواج')) return Icons.emoji_events;
     if (status.contains('مؤهل جزئياً')) return Icons.warning;
     return Icons.error;
   }
 
-  // ✅ brief status description
   String getStatusDescription() {
     if (status.contains('مؤهل للزواج')) {
       return 'أنت جاهز للزواج، لديك نضج عاطفي واجتماعي جيد';
@@ -152,7 +145,6 @@ class ResultModel {
     }
   }
 
-  // ✅ additional advice based on result
   String getDetailedAdvice() {
     if (overallScore >= 85) {
       return '🌟 ممتاز! أنت في حالة رائعة. حافظ على توازنك وكن قدوة للآخرين.';
@@ -167,7 +159,6 @@ class ResultModel {
     }
   }
 
-  // ✅ quick analysis for highest and lowest section
   Map<String, dynamic> getCategoryAnalysis() {
     if (categoryScores.isEmpty) {
       return {
@@ -185,41 +176,30 @@ class ResultModel {
     };
   }
 
-  // ✅ is result good?
   bool get isGood => overallScore >= 75;
-
-  // ✅ is result average?
   bool get isAverage => overallScore >= 50 && overallScore < 75;
-
-  // ✅ is result poor?
   bool get isPoor => overallScore < 50;
 
-  // ✅ formatted date
   String get formattedDate {
     return '${testDate.day}/${testDate.month}/${testDate.year}';
   }
 
-  // ✅ formatted date with time
   String get formattedDateTime {
     return '${testDate.day}/${testDate.month}/${testDate.year} ${testDate.hour}:${testDate.minute.toString().padLeft(2, '0')}';
   }
 
-  // ✅ compare two results
   bool isBetterThan(ResultModel other) {
     return overallScore > other.overallScore;
   }
 
-  // ✅ difference between two results
   double differenceWith(ResultModel other) {
     return (overallScore - other.overallScore).abs();
   }
 
-  // ✅ quick summary text
   String get quickSummary {
     return '$formattedDate - $overallScore% - $status';
   }
 
-  // ✅ full summary with main points
   String get fullSummary {
     StringBuffer summary = StringBuffer();
     summary.writeln('📊 نتيجة تقييم ${formattedDateTime}');

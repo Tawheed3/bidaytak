@@ -1,27 +1,31 @@
+// lib/core/models/test_record.dart
+
 import 'dart:convert';
 
 class TestRecord {
   final int? id;
+  final String userId; // ✅ إضافة userId
   final String name;
   final int age;
-  final String address;
   final String phone;
+  final String gender;
   final DateTime testDate;
   final double overallScore;
   final String status;
   final Map<String, double> categoryScores;
-  final List<Map<String, dynamic>> strengths; // top 4 only
-  final List<Map<String, dynamic>> weaknesses; // top 12 only
+  final List<Map<String, dynamic>> strengths;
+  final List<Map<String, dynamic>> weaknesses;
   final String advice;
   final Map<String, int> answers;
   final List<String> questions;
 
   TestRecord({
     this.id,
+    required this.userId, // ✅ إضافة userId
     required this.name,
     required this.age,
-    required this.address,
     required this.phone,
+    required this.gender,
     required this.testDate,
     required this.overallScore,
     required this.status,
@@ -36,10 +40,11 @@ class TestRecord {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'userId': userId, // ✅ إضافة userId
       'name': name,
       'age': age,
-      'address': address,
       'phone': phone,
+      'gender': gender,
       'testDate': testDate.toIso8601String(),
       'overallScore': overallScore,
       'status': status,
@@ -55,10 +60,11 @@ class TestRecord {
   factory TestRecord.fromMap(Map<String, dynamic> map) {
     return TestRecord(
       id: map['id'],
+      userId: map['userId'] ?? '', // ✅ قراءة userId
       name: map['name'],
       age: map['age'],
-      address: map['address'],
       phone: map['phone'],
+      gender: map['gender'] ?? 'male',
       testDate: DateTime.parse(map['testDate']),
       overallScore: map['overallScore'],
       status: map['status'],

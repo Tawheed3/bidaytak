@@ -1,3 +1,5 @@
+// lib/services/database_service.dart
+
 import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -20,8 +22,9 @@ class DatabaseService {
     String path = join(await getDatabasesPath(), 'test_records.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 4,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -29,10 +32,11 @@ class DatabaseService {
     await db.execute('''
       CREATE TABLE test_records(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId TEXT NOT NULL,
         name TEXT NOT NULL,
         age INTEGER NOT NULL,
-        address TEXT NOT NULL,
         phone TEXT NOT NULL,
+        gender TEXT NOT NULL,
         testDate TEXT NOT NULL,
         overallScore REAL NOT NULL,
         status TEXT NOT NULL,
@@ -44,47 +48,59 @@ class DatabaseService {
         questions TEXT NOT NULL
       )
     ''');
+
+    await db.execute('CREATE INDEX idx_userId ON test_records(userId)');
   }
 
-  // ✅ insert new record
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 4) {
+      await db.execute('DROP TABLE IF EXISTS test_records');
+      await _onCreate(db, newVersion);
+    }
+  }
+
   Future<int> insertRecord(TestRecord record) async {
     Database db = await database;
     return await db.insert('test_records', record.toMap());
   }
 
-  // ✅ get all records (sorted newest first)
+  Future<List<TestRecord>> getRecordsByUserId(String userId) async {
+    Database db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'test_records',
+      where: 'userId = ?',
+      whereArgs: [userId],
+      orderBy: 'testDate DESC',
+    );
+    return List.generate(maps.length, (i) => TestRecord.fromMap(maps[i]));
+  }
+
   Future<List<TestRecord>> getAllRecords() async {
     Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'test_records',
       orderBy: 'testDate DESC',
     );
-    return List.generate(maps.length, (i) {
-      return TestRecord.fromMap(maps[i]);
-    });
+    return List.generate(maps.length, (i) => TestRecord.fromMap(maps[i]));
   }
 
-  // ✅ get records by name
-  Future<List<TestRecord>> getRecordsByName(String name) async {
+  Future<List<TestRecord>> searchRecordsByUserIdAndName(String userId, String name) async {
     Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'test_records',
-      where: 'name LIKE ?',
-      whereArgs: ['%$name%'],
+      where: 'userId = ? AND name LIKE ?',
+      whereArgs: [userId, '%$name%'],
       orderBy: 'testDate DESC',
     );
-    return List.generate(maps.length, (i) {
-      return TestRecord.fromMap(maps[i]);
-    });
+    return List.generate(maps.length, (i) => TestRecord.fromMap(maps[i]));
   }
 
-  // ✅ get record by id
-  Future<TestRecord?> getRecordById(int id) async {
+  Future<TestRecord?> getRecordByIdAndUserId(int id, String userId) async {
     Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'test_records',
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'id = ? AND userId = ?',
+      whereArgs: [id, userId],
     );
     if (maps.isNotEmpty) {
       return TestRecord.fromMap(maps.first);
@@ -92,43 +108,45 @@ class DatabaseService {
     return null;
   }
 
-  // ✅ delete record
-  Future<int> deleteRecord(int id) async {
+  Future<int> deleteRecord(int id, String userId) async {
     Database db = await database;
     return await db.delete(
       'test_records',
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'id = ? AND userId = ?',
+      whereArgs: [id, userId],
     );
   }
 
-  // ✅ delete all records
-  Future<void> deleteAllRecords() async {
+  Future<void> deleteAllRecordsByUserId(String userId) async {
     Database db = await database;
-    await db.delete('test_records');
+    await db.delete(
+      'test_records',
+      where: 'userId = ?',
+      whereArgs: [userId],
+    );
   }
 
-  // ✅ record count
-  Future<int> getRecordsCount() async {
+  Future<int> getRecordsCountByUserId(String userId) async {
     Database db = await database;
-    final result = await db.rawQuery('SELECT COUNT(*) FROM test_records');
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) FROM test_records WHERE userId = ?',
+      [userId],
+    );
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
-  // ✅ advanced search (between dates)
-  Future<List<TestRecord>> getRecordsBetweenDates(
+  Future<List<TestRecord>> getRecordsByUserIdBetweenDates(
+      String userId,
       DateTime startDate,
       DateTime endDate,
       ) async {
     Database db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'test_records',
-      where: 'testDate BETWEEN ? AND ?',
-      whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
+      where: 'userId = ? AND testDate BETWEEN ? AND ?',
+      whereArgs: [userId, startDate.toIso8601String(), endDate.toIso8601String()],
       orderBy: 'testDate DESC',
     );
-    return List.generate(maps.length, (i) {
-      return TestRecord.fromMap(maps[i]);
-    });
+    return List.generate(maps.length, (i) => TestRecord.fromMap(maps[i]));
   }
 }

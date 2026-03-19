@@ -1,101 +1,119 @@
 // lib/services/ai_service.dart
 
-import 'dart:math';
 import '../core/models/question_model.dart';
-import 'advice_service.dart'; // ✅ import advice service
+import 'advice_service.dart';
 
 class AIService {
-
   static Future<Map<String, dynamic>> analyzeResults({
     required List<Question> questions,
     required Map<String, int> answers,
     required Map<String, double> categoryScores,
+    required String gender,
   }) async {
+    try {
+      // حساب متوسط الدرجات
+      double totalScore = categoryScores.values.reduce((a, b) => a + b);
+      double overallScore = totalScore / categoryScores.length;
 
-    // calculate overall score
-    double totalScore = 0;
-    answers.forEach((key, value) => totalScore += value);
-    double overallScore = (totalScore / (questions.length * 4)) * 100;
+      // تحديد نقاط القوة والضعف مع النصائح
+      List<Map<String, dynamic>> strengths = [];
+      List<Map<String, dynamic>> weaknesses = [];
 
-    // determine status
-    String status;
-    if (overallScore >= 75) {
-      status = 'مؤهل للزواج';
-    } else if (overallScore >= 50) {
-      status = 'مؤهل جزئياً';
-    } else {
-      status = 'غير مؤهل';
-    }
+      for (var question in questions) {
+        int score = answers[question.id] ?? 0;
 
-    // prepare detailed strengths and weaknesses
-    List<Map<String, dynamic>> detailedStrengths = [];
-    List<Map<String, dynamic>> detailedWeaknesses = [];
+        // جلب النصيحة المناسبة
+        String advice = await AdviceService.getAdviceForQuestion(
+          question.id,
+          gender: gender,
+          isStrength: score >= 3,
+        );
 
-    for (var question in questions) {
-      int score = answers[question.id] ?? 0;
-      String answerText = '';
-
-      for (var answer in question.answers) {
-        if (answer.score == score) {
-          answerText = answer.text;
-          break;
+        if (score >= 3) {
+          strengths.add({
+            'question': question.text,
+            'score': score,
+            'advice': advice,
+          });
+        } else if (score <= 2) {
+          weaknesses.add({
+            'question': question.text,
+            'score': score,
+            'advice': advice,
+          });
         }
       }
 
-      if (score >= 3) {
-        detailedStrengths.add({
-          'question': question.text,
-          'userAnswer': answerText,
-          'score': score,
-          'category': question.category,
-          'analysis': AdviceService.getStrengthAnalysis(question.text, score),
-          'advice': AdviceService.getAdvice(question.id, score), // ✅ use JSON
-        });
-      } else if (score <= 2) {
-        detailedWeaknesses.add({
-          'question': question.text,
-          'userAnswer': answerText,
-          'score': score,
-          'category': question.category,
-          'analysis': AdviceService.getWeaknessAnalysis(question.text, score),
-          'advice': AdviceService.getAdvice(question.id, score), // ✅ use JSON
-        });
+      // ترتيب نقاط القوة والضعف
+      strengths.sort((a, b) => b['score'].compareTo(a['score']));
+      weaknesses.sort((a, b) => a['score'].compareTo(b['score']));
+
+      // إنشاء خطة تطوير بسيطة
+      List<String> developmentPlan = [];
+      if (overallScore < 70) {
+        developmentPlan.add('ركز على تحسين المجالات التي حصلت فيها على أقل من 50%.');
+        developmentPlan.add('خصص وقتاً أسبوعياً للقراءة والتطوير الذاتي.');
+        developmentPlan.add('استشر متخصصاً في المجالات التي تحتاج دعماً.');
+      } else {
+        developmentPlan.add('استمر في تطوير نقاط قوتك.');
+        developmentPlan.add('كن قدوة للآخرين في المجالات التي تتميز بها.');
       }
+
+      // نصيحة عامة
+      String generalAdvice = _generateGeneralAdvice(overallScore, categoryScores);
+
+      // تحديد الحالة
+      String status;
+      if (overallScore >= 85) {
+        status = 'مؤهل للزواج';
+      } else if (overallScore >= 70) {
+        status = 'مؤهل جزئياً - جيد';
+      } else if (overallScore >= 50) {
+        status = 'مؤهل جزئياً';
+      } else if (overallScore >= 30) {
+        status = 'غير مؤهل - يحتاج تحسين';
+      } else {
+        status = 'غير مؤهل تماماً';
+      }
+
+      return {
+        'overallScore': overallScore,
+        'status': status,
+        'categoryScores': categoryScores,
+        'strengths': strengths.take(12).toList(),
+        'weaknesses': weaknesses.take(12).toList(),
+        'developmentPlan': developmentPlan,
+        'advice': generalAdvice,
+        'detailedStrengths': strengths,
+        'detailedWeaknesses': weaknesses,
+      };
+    } catch (e) {
+      print('❌ خطأ في تحليل الذكاء الاصطناعي: $e');
+      return {
+        'overallScore': 0,
+        'status': 'خطأ في التحليل',
+        'categoryScores': categoryScores,
+        'strengths': [],
+        'weaknesses': [],
+        'developmentPlan': ['حدث خطأ في التحليل. يرجى المحاولة مرة أخرى.'],
+        'advice': 'نأسف، حدث خطأ في تحليل نتائجك.',
+        'detailedStrengths': [],
+        'detailedWeaknesses': [],
+      };
     }
+  }
 
-    // sort strengths (highest first)
-    detailedStrengths.sort((a, b) => (b['score'] ?? 0).compareTo(a['score'] ?? 0));
-
-    // sort weaknesses (lowest first)
-    detailedWeaknesses.sort((a, b) => (a['score'] ?? 0).compareTo(b['score'] ?? 0));
-
-    // create development plan (first 3 weaknesses)
-    List<String> developmentPlan = [];
-    if (detailedWeaknesses.isNotEmpty) {
-      developmentPlan.add('الأسبوع الأول: ركز على تحسين: "${detailedWeaknesses[0]['question']}"');
-      if (detailedWeaknesses.length > 1) {
-        developmentPlan.add('الأسبوع الثاني: اعمل على: "${detailedWeaknesses[1]['question']}"');
-      }
-      if (detailedWeaknesses.length > 2) {
-        developmentPlan.add('الأسبوع الثالث: طور: "${detailedWeaknesses[2]['question']}"');
-      }
+  static String _generateGeneralAdvice(double overallScore, Map<String, double> categoryScores) {
+    if (overallScore >= 85) {
+      return 'مبروك! أنت مؤهل بشكل ممتاز للزواج. حافظ على استمراريتك في تطوير نفسك وعلاقاتك.';
+    } else if (overallScore >= 70) {
+      return 'أنت مؤهل جيداً للزواج. واصل العمل على نقاط القوة وحاول تحسين نقاط الضعف البسيطة.';
+    } else if (overallScore >= 50) {
+      return 'أنت مؤهل جزئياً. تحتاج للعمل على بعض المجالات قبل الزواج. لا تيأس، التغيير ممكن.';
+    } else if (overallScore >= 30) {
+      return 'أنت غير مؤهل حالياً. نوصيك بالتركيز على تطوير نفسك والاستعانة بمختصين.';
+    } else {
+      return 'أنت غير مؤهل تماماً. ننصحك بالتوقف وطلب المساعدة المهنية لتحديد المشاكل والعمل عليها.';
     }
-
-    // general advice
-    String generalAdvice = AdviceService.getGeneralAdvice(
-      detailedStrengths.length,
-      detailedWeaknesses.length,
-      overallScore,
-    );
-
-    return {
-      'overallScore': overallScore,
-      'status': status,
-      'categoryScores': categoryScores,
-      'detailedStrengths': detailedStrengths,
-      'detailedWeaknesses': detailedWeaknesses,
-      'advice': generalAdvice,
-      'developmentPlan': developmentPlan,
-    };
   }
 }

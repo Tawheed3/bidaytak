@@ -1,25 +1,31 @@
+// lib/providers/test_provider.dart
+
 import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../core/models/question_model.dart';
 import '../core/models/result_model.dart';
 import '../core/models/test_record.dart';
 import '../core/models/user_data.dart';
+import '../core/utils/navigator_key.dart';
+import '../providers/auth_provider.dart';
 import '../services/ai_service.dart';
 import '../services/database_service.dart';
+import '../services/notification_service.dart';
 
 class TestProvider extends ChangeNotifier {
   List<Question> _allQuestions = [];
   List<Question> _selectedQuestions = [];
   Map<String, int> _answers = {};
   int _currentIndex = 0;
-  bool _isLoading = true;
+  bool _isLoading = false;
 
-  // ✅ user data
+  // user data
   UserData? _userData;
 
-  // ✅ AI variables
+  // AI variables
   bool _isAnalyzing = false;
   Map<String, dynamic> _aiAnalysis = {};
 
@@ -43,30 +49,23 @@ class TestProvider extends ChangeNotifier {
   double get progress => _selectedQuestions.isEmpty ? 0 : (_currentIndex + 1) / _selectedQuestions.length;
   bool get isLoading => _isLoading;
 
-  // ✅ new getters
   UserData? get userData => _userData;
   bool get hasUserData => _userData != null;
-
-  // ✅ AI getters
   bool get isAnalyzing => _isAnalyzing;
   Map<String, dynamic> get aiAnalysis => _aiAnalysis;
 
-  TestProvider() {
-    loadQuestions();
-  }
-
-  // ✅ save user data
+  // save user data
   void saveUserData({
     required String name,
     required int age,
-    required String address,
     required String phone,
+    required String gender,
   }) {
     _userData = UserData(
       name: name,
       age: age,
-      address: address,
       phone: phone,
+      gender: gender,
       testDate: DateTime.now(),
     );
     notifyListeners();
@@ -81,7 +80,13 @@ class TestProvider extends ChangeNotifier {
       final data = json.decode(response);
 
       final List<dynamic> questionsJson = data['questions'];
-      _allQuestions = questionsJson.map((q) => Question.fromJson(q)).toList();
+
+      // تحميل جميع الأسئلة مع تحديد الجنس الحالي
+      String currentGender = _userData?.gender ?? 'male';
+
+      _allQuestions = questionsJson.map((q) =>
+          Question.fromJson(q, gender: currentGender)
+      ).toList();
 
       print('✅ تم تحميل ${_allQuestions.length} سؤال بنجاح');
       _selectRandomQuestions();
@@ -173,6 +178,7 @@ class TestProvider extends ChangeNotifier {
       questions: _selectedQuestions,
       answers: _answers,
       categoryScores: categoryScores,
+      gender: _userData?.gender ?? 'male',
     );
 
     _isAnalyzing = false;
@@ -186,6 +192,7 @@ class TestProvider extends ChangeNotifier {
       analysis: _aiAnalysis,
       rawAnswers: _answers,
       questions: _selectedQuestions,
+      gender: _userData?.gender ?? 'male',
     );
   }
 
@@ -256,14 +263,21 @@ class TestProvider extends ChangeNotifier {
     return advice.toString();
   }
 
-  // ✅ save test result to database (top 4 strengths and top 12 weaknesses)
+  // ✅ حفظ نتيجة الاختبار مع userId وجدولة تذكير
   Future<void> saveTestResult(ResultModel result) async {
     if (_userData == null) return;
 
-    // convert questions to text
+    // الحصول على userId من AuthProvider
+    final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
+    final userId = authProvider.user?.uid ?? '';
+
+    if (userId.isEmpty) {
+      print('⚠️ المستخدم غير مسجل، لن يتم حفظ السجل');
+      return;
+    }
+
     List<String> questionTexts = _selectedQuestions.map((q) => q.text).toList();
 
-    // get top 4 strengths
     List<Map<String, dynamic>> topStrengths = [];
     if (result.detailedStrengths != null) {
       List<Map<String, dynamic>> sorted = List.from(result.detailedStrengths!)
@@ -271,7 +285,6 @@ class TestProvider extends ChangeNotifier {
       topStrengths = sorted.take(4).toList();
     }
 
-    // get top 12 weaknesses
     List<Map<String, dynamic>> topWeaknesses = [];
     if (result.detailedWeaknesses != null) {
       List<Map<String, dynamic>> sorted = List.from(result.detailedWeaknesses!)
@@ -280,16 +293,17 @@ class TestProvider extends ChangeNotifier {
     }
 
     final record = TestRecord(
+      userId: userId,
       name: _userData!.name,
       age: _userData!.age,
-      address: _userData!.address,
       phone: _userData!.phone,
+      gender: _userData!.gender,
       testDate: DateTime.now(),
       overallScore: result.overallScore,
       status: result.status,
       categoryScores: result.categoryScores,
-      strengths: topStrengths, // ✅ top 4 only
-      weaknesses: topWeaknesses, // ✅ top 12 only
+      strengths: topStrengths,
+      weaknesses: topWeaknesses,
       advice: result.advice,
       answers: _answers,
       questions: questionTexts,
@@ -298,40 +312,73 @@ class TestProvider extends ChangeNotifier {
     try {
       final dbService = DatabaseService();
       int id = await dbService.insertRecord(record);
-      print('✅ تم حفظ السجل بنجاح بالرقم: $id');
+      print('✅ تم حفظ السجل للمستخدم $userId بالرقم: $id');
+
+      // ✅ جدولة تذكير بعد 3 أيام
+      if (id > 0) {
+        final notificationService = NotificationService();
+        await notificationService.cancelAllNotifications(); // إلغاء أي تذكيرات سابقة
+        await notificationService.scheduleThreeDayReminder(record);
+      }
     } catch (e) {
       print('❌ خطأ في حفظ السجل: $e');
     }
   }
 
-  // ✅ get all records
-  Future<List<TestRecord>> getAllRecords() async {
+  // ✅ تشغيل الإشعارات المتكررة كل 3 أيام
+  Future<void> startRecurringReminders() async {
     try {
+      final notificationService = NotificationService();
+      await notificationService.startRecurringReminders();
+      print('✅ تم تشغيل الإشعارات المتكررة كل 3 أيام');
+    } catch (e) {
+      print('❌ خطأ في تشغيل الإشعارات المتكررة: $e');
+    }
+  }
+
+  // ✅ جلب سجلات المستخدم الحالي
+  Future<List<TestRecord>> getUserRecords() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
+      final userId = authProvider.user?.uid ?? '';
+
+      if (userId.isEmpty) return [];
+
       final dbService = DatabaseService();
-      return await dbService.getAllRecords();
+      return await dbService.getRecordsByUserId(userId);
     } catch (e) {
       print('❌ خطأ في جلب السجلات: $e');
       return [];
     }
   }
 
-  // ✅ get records by name
-  Future<List<TestRecord>> getRecordsByName(String name) async {
+  // ✅ البحث في سجلات المستخدم الحالي
+  Future<List<TestRecord>> searchUserRecords(String name) async {
     try {
+      final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
+      final userId = authProvider.user?.uid ?? '';
+
+      if (userId.isEmpty) return [];
+
       final dbService = DatabaseService();
-      return await dbService.getRecordsByName(name);
+      return await dbService.searchRecordsByUserIdAndName(userId, name);
     } catch (e) {
-      print('❌ خطأ في جلب السجلات: $e');
+      print('❌ خطأ في البحث: $e');
       return [];
     }
   }
 
-  // ✅ delete record
-  Future<void> deleteRecord(int id) async {
+  // ✅ حذف سجل من سجلات المستخدم الحالي
+  Future<void> deleteUserRecord(int id) async {
     try {
+      final authProvider = Provider.of<AuthProvider>(navigatorKey.currentContext!, listen: false);
+      final userId = authProvider.user?.uid ?? '';
+
+      if (userId.isEmpty) return;
+
       final dbService = DatabaseService();
-      await dbService.deleteRecord(id);
-      print('✅ تم حذف السجل رقم: $id');
+      await dbService.deleteRecord(id, userId);
+      print('✅ تم حذف السجل رقم: $id للمستخدم $userId');
     } catch (e) {
       print('❌ خطأ في حذف السجل: $e');
     }
@@ -341,7 +388,8 @@ class TestProvider extends ChangeNotifier {
     _answers = {};
     _currentIndex = 0;
     _aiAnalysis = {};
-    _selectRandomQuestions();
+    _selectedQuestions = [];
+    _userData = null;
     notifyListeners();
   }
 }
