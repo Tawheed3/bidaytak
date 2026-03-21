@@ -1,19 +1,26 @@
-# Flutter specific
-# ⚠️ تم تعليق السطرين اللذين كانا يسببان المشكلة
-# -keep class io.flutter.app.** { *; }
--keep class io.flutter.plugin.**  { *; }
--keep class io.flutter.util.**  { *; }
--keep class io.flutter.view.**  { *; }
-# -keep class io.flutter.**  { *; }  # ❌ هذا السطر كان المشكلة الكبرى
--keep class io.flutter.plugins.**  { *; }
+# flutter_local_notifications
+-keep class com.dexterous.flutterlocalnotifications.** { *; }
+-keep class androidx.core.app.NotificationCompat$** { *; }
+-keep class androidx.core.app.NotificationManagerCompat$** { *; }
+-keep class androidx.core.app.NotificationChannelCompat$** { *; }
 
-# Firebase
--keep class com.google.firebase.** { *; }
--keep class com.google.android.gms.** { *; }
+# الحفاظ على الأنواع العامة (generic types)
+-keepattributes Signature
+-keepattributes *Annotation*
 
-# PDF
--keep class com.shockwave.**
+# منع إزالة الكلاسات المستخدمة بواسطة الانعكاس
+-keep class com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin { *; }
+-keep class com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin$** { *; }
+-keep class com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin$**$** { *; }
 
-# ✅ القواعد المطلوبة من missing_rules.txt
--keep class com.google.android.play.core.** { *; }
--dontwarn com.google.android.play.core.**
+# الحفاظ على TypeToken
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+
+# الحفاظ على الكلاسات المستخدمة بواسطة الانعكاس في الإشعارات
+-keep class androidx.core.app.NotificationCompat { *; }
+-keep class androidx.core.app.NotificationManagerCompat { *; }
+-keep class androidx.core.app.NotificationChannelCompat { *; }
+
+# الحفاظ على كافة الكلاسات في حزمة flutter_local_notifications
+-keep class io.flutter.plugins.** { *; }

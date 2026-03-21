@@ -1,3 +1,5 @@
+// android/app/build.gradle.kts
+
 plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
@@ -29,16 +31,6 @@ android {
         multiDexEnabled = true
     }
 
-    // ✅ تقسيم APKs (هنا بس، ومتضيفش أي حاجة تانية للـ ABIs)
-    // splits {
-    //   abi {
-    //       isEnable = true
-    //       reset()
-    //         include("armeabi-v7a", "arm64-v8a", "x86_64")
-    //         isUniversalApk = false
-    //      }
-    //   }
-
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
@@ -49,6 +41,17 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
+    }
+
+    // ✅ إضافة هذا القسم لمنع مشاكل ProGuard مع flutter_local_notifications
+    packaging {
+        resources {
+            excludes += "META-INF/proguard/**"
+        }
     }
 }
 
@@ -58,4 +61,7 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // ✅ إضافة هذه التبعية لحل مشكلة TypeToken
+    implementation("com.google.code.gson:gson:2.10.1")
 }

@@ -4,8 +4,9 @@ description: "تطبيق بدايتك - تقييم الاستعداد للزوا
 publish_to: 'none'
 version: 1.0.0+1
 
+# ✅ أضف هذا القسم - مهم جداً
 environment:
-  sdk: ^3.10.4
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -34,9 +35,12 @@ dependencies:
   firebase_auth: ^6.1.4
   google_sign_in: ^6.3.0
   cloud_firestore: ^6.1.2
-  flutter_local_notifications: ^17.2.3
+  
+  # ✅ استخدم هذا الإصدار المستقر
+  flutter_local_notifications: ^17.2.4
   timezone: ^0.9.4
   flutter_timezone: ^4.1.0
+  
   share_plus: ^10.1.4
   path_provider: ^2.1.5
   screenshot: ^3.0.0
