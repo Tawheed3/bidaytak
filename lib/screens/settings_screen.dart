@@ -10,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/auth_provider.dart';
 import '../providers/test_provider.dart';
-import '../services/push_notification_service.dart';
 import 'login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -27,90 +26,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   File? _profileImage;
 
-  // ✅ قائمة الأيميلات المسموح لها (الأدمن)
-  final List<String> _adminEmails = [
-    'tawheedkortam1@gmail.com',
-  ];
-
-  // ✅ التحقق إذا كان المستخدم الحالي هو أدمن
-  bool _isAdmin(AuthProvider authProvider) {
-    final email = authProvider.userEmail;
-    return email != null && _adminEmails.contains(email.toLowerCase());
-  }
-
-  // ✅ إرسال إشعار عام لجميع المستخدمين
-  Future<void> _sendNotificationToAllUsers() async {
-    print('🟡 بدأ إرسال الإشعارات العامة');
-
-    // عرض حوار التحميل
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(color: Colors.teal),
-              const SizedBox(height: 20),
-              Text(
-                'جاري إرسال الإشعارات...',
-                style: GoogleFonts.cairo(fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    try {
-      final notificationService = PushNotificationService();
-
-      // ✅ رسالة عامة للجميع
-      final title = '📊 تقييم الاستعداد للزواج';
-      final body = 'حان الوقت لتقييم تطورك! جرب اختبار بدايتك مرة أخرى.';
-
-      await notificationService.sendNotificationToAllUsers(
-        title: title,
-        body: body,
-      );
-
-      print('🟢 تم إرسال الإشعارات بنجاح');
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '✅ تم إرسال الإشعارات لجميع المستخدمين',
-              style: GoogleFonts.cairo(),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      print('🔴 خطأ في إرسال الإشعارات: $e');
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '❌ حدث خطأ في إرسال الإشعارات',
-              style: GoogleFonts.cairo(),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedImage();
+    });
   }
 
   Future<void> _loadSavedImage() async {
@@ -435,7 +356,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final bool isAdmin = _isAdmin(authProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -462,13 +382,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _buildProfileCard(authProvider),
               const SizedBox(height: 16),
-
-              // ✅ زر الإشعارات - يظهر فقط للأدمن
-              if (isAdmin) ...[
-                _buildNotificationSection(),
-                const SizedBox(height: 20),
-              ],
-
               _buildAboutSection(),
               const SizedBox(height: 8),
               _buildContactSection(),
@@ -636,58 +549,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ✅ قسم الإشعارات (يظهر فقط للأدمن)
-  Widget _buildNotificationSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _sendNotificationToAllUsers,
-              icon: const Icon(Icons.notifications_active, size: 20),
-              label: Text(
-                'إرسال إشعار لجميع المستخدمين',
-                style: GoogleFonts.cairo(fontSize: 14),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'إرسال إشعار تشجيعي لجميع مستخدمي التطبيق',
-            style: GoogleFonts.cairo(
-              fontSize: 12,
-              color: Colors.grey[500],
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // باقي الدوال كما هي (AboutSection, ContactSection, LogoutButton, إلخ...)
   Widget _buildAboutSection() {
     return Column(
       children: [
@@ -1049,13 +910,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              try {
-                final notificationService = PushNotificationService();
-                await notificationService.cancelAllNotifications();
-              } catch (e) {
-                print('🔴 خطأ في إلغاء الإشعارات: $e');
-              }
-
               Navigator.pop(ctx);
               await authProvider.signOut();
               if (context.mounted) {

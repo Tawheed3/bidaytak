@@ -10,24 +10,17 @@ import 'providers/test_provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
 import 'services/advice_service.dart';
-import 'services/push_notification_service.dart';
 import 'core/utils/navigator_key.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // ✅ تهيئة الإشعارات
-  final pushNotificationService = PushNotificationService();
-  await pushNotificationService.init();
-
   await AdviceService.loadAdvice();
 
-  // ✅ check stored login state (optional)
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
